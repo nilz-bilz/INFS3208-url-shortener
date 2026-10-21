@@ -1,0 +1,71 @@
+# Stage 1: whole app without Kubernetes. Only the gateway publishes a port (8080).
+x-app-env: &app-env
+  DB_HOST: ${DB_HOST:-mysql}
+  DB_PORT: ${DB_PORT:-3306}
+  DB_NAME: ${DB_NAME:-shortener}
+  DB_USER: ${DB_USER:-app}
+  DB_PASSWORD: ${DB_PASSWORD:-devpassword}
+  REDIS_HOST: ${REDIS_HOST:-redis}
+  REDIS_PORT: ${REDIS_PORT:-6379}
+  BASE_URL: ${BASE_URL:-http://localhost:8080}
+  SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-86400}
+  CACHE_TTL_SECONDS: ${CACHE_TTL_SECONDS:-3600}
+
+x-build-args: &build-args
+  APP_VERSION: ${APP_VERSION:-v1}
+
+services:
+  mysql:
+    image: docker.io/library/mysql:8.0
+    # native password auth so PyMySQL works without the cryptography package
+    command: ["--authentication-policy=mysql_native_password"]
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-devroot}
+      MYSQL_DATABASE: ${DB_NAME:-shortener}
+      MYSQL_USER: ${DB_USER:-app}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-devpassword}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro,z
+
+  redis:
+    image: docker.io/library/redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+
+  shortener:
+    build: {context: ./shortener, args: *build-args}
+    image: localhost/shortener:${APP_VERSION:-v1}
+    environment: *app-env
+    depends_on: [mysql, redis]
+
+  redirect:
+    build: {context: ./redirect, args: *build-args}
+    image: localhost/redirect:${APP_VERSION:-v1}
+    environment: *app-env
+    depends_on: [mysql, redis]
+
+  analytics-api:
+    build: {context: ./analytics, args: *build-args}
+    image: localhost/analytics:${APP_VERSION:-v1}
+    environment: *app-env
+    depends_on: [mysql, redis]
+
+  analytics-worker:
+    image: localhost/analytics:${APP_VERSION:-v1}
+    command: ["python", "worker.py"]
+    environment: *app-env
+    depends_on: [analytics-api]
+
+  frontend:
+    build: {context: ./frontend, args: *build-args}
+    image: localhost/frontend:${APP_VERSION:-v1}
+
+  gateway:
+    image: docker.io/library/nginx:1.27-alpine
+    ports: ["8080:80"]
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro,z
+    depends_on: [frontend, shortener, redirect, analytics-api]
+
+volumes:
+  mysql-data:

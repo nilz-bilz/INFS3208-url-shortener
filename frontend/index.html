@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>URL SHORTENER</title>
+<link rel="stylesheet" href="/ui/style.css">
+</head>
+<body>
+<h1>URL SHORTENER</h1>
+<p id="msg"></p>
+
+<section id="out" hidden>
+  <div class="cols">
+    <form id="login-form">
+      <h2>Log in</h2>
+      <input name="username" placeholder="username" required autocomplete="username">
+      <input name="password" type="password" placeholder="password" required autocomplete="current-password">
+      <button>LOG IN</button>
+    </form>
+    <form id="register-form">
+      <h2>Register</h2>
+      <input name="username" placeholder="username (3-50, a-z 0-9 _)" required autocomplete="username">
+      <input name="password" type="password" placeholder="password (min 8)" required autocomplete="new-password">
+      <button>REGISTER</button>
+    </form>
+  </div>
+</section>
+
+<section id="in" hidden>
+  <p>logged in as <b id="who"></b> <button id="logout" class="linkbtn">[log out]</button></p>
+  <form id="create-form">
+    <input id="in-wide" name="url" type="url" placeholder="https://example.com/long/url" required>
+    <button>SHORTEN</button>
+  </form>
+  <h2>Your links <button id="refresh">refresh</button></h2>
+  <table>
+    <thead><tr><th>short</th><th>target</th><th>clicks</th><th>created</th><th>actions</th></tr></thead>
+    <tbody id="links"></tbody>
+  </table>
+  <section id="stats" hidden>
+    <h2>Stats: <span id="stats-code"></span> <button id="stats-close">close</button></h2>
+    <p>total clicks: <span id="stats-total"></span> · last click: <span id="stats-last"></span></p>
+    <pre id="stats-chart"></pre>
+  </section>
+  <h2>Top links</h2>
+  <ol id="top"></ol>
+</section>
+
+<footer>frontend __APP_VERSION__ · last API response served by <span id="served">-</span></footer>
+<script src="/ui/app.js"></script>
+</body>
+</html>
