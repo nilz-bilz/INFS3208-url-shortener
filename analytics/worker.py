@@ -26,9 +26,10 @@ def handle(raw):
         link = cur.fetchone()
         if not link:
             return  # link was deleted; drop the event
-        cur.execute("INSERT INTO clicks (link_id, clicked_at, referrer, user_agent) "
-                    "VALUES (%s, %s, %s, %s)",
-                    (link["id"], ts, ev.get("referrer") or None, ev.get("user_agent") or None))
+        cur.execute("INSERT INTO clicks (link_id, clicked_at, referrer, user_agent, source) "
+                    "VALUES (%s, %s, %s, %s, %s)",
+                    (link["id"], ts, ev.get("referrer") or None, ev.get("user_agent") or None,
+                     ev.get("source", "web")))
         cur.execute("UPDATE links SET click_count = click_count + 1 WHERE id=%s", (link["id"],))
 
 

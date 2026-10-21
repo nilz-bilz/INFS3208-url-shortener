@@ -37,16 +37,19 @@ def stats(code):
         link = cur.fetchone()
         if not link:
             return c.json_error("not found", 404)
-        cur.execute("SELECT DATE(clicked_at) AS d, COUNT(*) AS n FROM clicks "
+        cur.execute("SELECT DATE(clicked_at) AS d, COUNT(*) AS n, SUM(source='qr') AS qr FROM clicks "
                     "WHERE link_id=%s AND clicked_at >= %s GROUP BY d", (link["id"], start))
-        counts = {r["d"]: r["n"] for r in cur.fetchall()}
+        counts = {r["d"]: (r["n"], int(r["qr"])) for r in cur.fetchall()}
+        cur.execute("SELECT COUNT(*) AS n FROM clicks WHERE link_id=%s AND source='qr'", (link["id"],))
+        qr_total = cur.fetchone()["n"]
         cur.execute("SELECT MAX(clicked_at) AS last FROM clicks WHERE link_id=%s", (link["id"],))
         last = cur.fetchone()["last"]
     daily = []
     for i in range(7):
         d = start + timedelta(days=i)
-        daily.append({"date": d.isoformat(), "clicks": counts.get(d, 0)})
+        n, qr = counts.get(d, (0, 0))
+        daily.append({"date": d.isoformat(), "clicks": n, "qr_clicks": qr})
     return jsonify({"code": link["code"], "url": link["url"],
-                    "total_clicks": link["click_count"],
+                    "total_clicks": link["click_count"], "qr_clicks": qr_total,
                     "last_click_at": last.strftime("%Y-%m-%dT%H:%M:%SZ") if last else None,
                     "daily": daily})

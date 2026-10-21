@@ -12,9 +12,10 @@ Build a minimal URL shortener as 4 small Flask/nginx images (5 Deployments) plus
 2. Create a short link for a long URL.
 3. Visit a short link and get redirected (HTTP 302).
 4. List and delete your own links.
-5. View click stats per link (total, last click, last 7 days) and your top links.
+5. Optional link expiry (`expires_in_hours` on create) and a QR code per link whose scans are counted separately (`?src=qr`).
+6. View click stats per link (total, last click, last 7 days) and your top links.
 
-**Out of scope (do not build):** custom aliases, link expiry, QR codes, password reset, email, OAuth, admin pages, rate limiting, a JS framework, a CSS framework, an ORM, message brokers other than Redis, service mesh, Helm charts, CI/CD.
+**Out of scope (do not build):** custom aliases, password reset, email, OAuth, admin pages, rate limiting, a JS framework, a CSS framework, an ORM, message brokers other than Redis, service mesh, Helm charts, CI/CD.
 
 **KISS rules for the implementing agent:**
 
@@ -75,7 +76,7 @@ Python 3.12 + Flask + gunicorn for the three backend images, nginx for the front
 | `mysql` | `mysql:8.0`, StatefulSet + 1 Gi PVC | 3306 | 1 |
 | `redis` | `redis:7-alpine` | 6379 | 1 |
 
-**Python dependencies (all three backends):** `flask`, `gunicorn`, `pymysql`, `redis`. Pin exact versions in each `requirements.txt`. Passwords use `werkzeug.security` (ships with Flask).
+**Python dependencies (all three backends):** `flask`, `gunicorn`, `pymysql`, `redis`; the shortener also uses `qrcode` (SVG output, pure Python). Pin exact versions in each `requirements.txt`. Passwords use `werkzeug.security` (ships with Flask).
 
 **Repo layout:**
 
@@ -145,6 +146,7 @@ CREATE TABLE IF NOT EXISTS links (
   url         VARCHAR(2048) NOT NULL,
   user_id     INT           NOT NULL,
   click_count INT           NOT NULL DEFAULT 0,
+  expires_at  DATETIME      NULL,                -- UTC; NULL = never expires
   created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   INDEX idx_links_user (user_id)
@@ -156,6 +158,7 @@ CREATE TABLE IF NOT EXISTS clicks (
   clicked_at DATETIME     NOT NULL,
   referrer   VARCHAR(255) NULL,
   user_agent VARCHAR(255) NULL,
+  source     VARCHAR(8)   NOT NULL DEFAULT 'web', -- 'web' or 'qr'
   FOREIGN KEY (link_id) REFERENCES links(id) ON DELETE CASCADE,
   INDEX idx_clicks_link_time (link_id, clicked_at)
 );
@@ -177,7 +180,7 @@ CREATE TABLE IF NOT EXISTS clicks (
 | `link:<code>` | string | target URL | `CACHE_TTL_SECONDS` | shortener (on create), redirect (on cache miss) | redirect |
 | `clicks` | list | JSON click event | none | redirect (`LPUSH`) | analytics-worker (`BRPOP`) |
 
-Click event JSON: `{"code": "aZ3k9Q", "ts": "2026-10-20T10:15:02Z", "referrer": "...", "user_agent": "..."}`. Truncate `referrer` and `user_agent` to 255 characters before pushing.
+Click event JSON (`source` is `qr` when the request has `?src=qr`, else `web`): `{"code": "aZ3k9Q", "source": "web", "ts": "2026-10-20T10:15:02Z", "referrer": "...", "user_agent": "..."}`. Truncate `referrer` and `user_agent` to 255 characters before pushing.
 
 **Seed data (`scripts/seed.py`):** creates user `demo` / `demo1234`, 50 links, and about 20,000 `clicks` rows spread over the last 30 days with `click_count` updated to match. It writes straight to MySQL with batched `executemany`, so the stats charts and top-links list look realistic in the demo. Run it with `kubectl port-forward` to MySQL, or as a one-off `kubectl run` pod.
 
@@ -208,11 +211,13 @@ All traffic enters through one host (e.g. `https://s.yourdomain.com`). The Ingre
 | POST | `/api/auth/login` | no | `{"username", "password"}` | `200 {"token", "username"}` | `400`, `401` bad credentials |
 | POST | `/api/auth/logout` | yes | none | `204` | `401` |
 | GET | `/api/auth/me` | yes | none | `200 {"id", "username"}` | `401` |
-| POST | `/api/links` | yes | `{"url"}` | `201` link object | `400` invalid URL, `401` |
+| POST | `/api/links` | yes | `{"url", "expires_in_hours"?}` | `201` link object | `400` invalid URL, `401` |
 | GET | `/api/links` | yes | none | `200 [link object, ...]` newest first | `401` |
+| GET | `/api/links/<code>/qr` | no | none | `200` SVG of `<BASE_URL>/<code>?src=qr` | `404` unknown code |
+| PATCH | `/api/links/<code>` | yes | `{"url"?, "expires_in_hours"?}` (`null` clears expiry; absent keeps it) | `200` link object | `400`, `401`, `404` not found or not yours |
 | DELETE | `/api/links/<code>` | yes | none | `204` | `401`, `404` not found or not yours |
 
-Link object: `{"code": "aZ3k9Q", "url": "https://...", "short_url": "<BASE_URL>/aZ3k9Q", "click_count": 0, "created_at": "2026-10-20T10:15:02Z"}`.
+Link object: `{"code": "aZ3k9Q", "url": "https://...", "short_url": "<BASE_URL>/aZ3k9Q", "click_count": 0, "created_at": "2026-10-20T10:15:02Z", "expires_at": null}`. `expires_in_hours` is an optional integer 1 to 8760; `400` otherwise. The Redis cache TTL is capped at the time left, and the redirect treats expired links as not found (`404`).
 
 Behaviour:
 
@@ -244,7 +249,7 @@ Behaviour:
 | GET | `/api/stats/<code>` | yes | `200` stats object | `401`, `404` not found or not yours |
 | GET | `/api/stats/top?limit=10` | yes | `200 [{"code", "url", "click_count"}, ...]` highest first | `401` |
 
-Stats object: `{"code", "url", "total_clicks", "last_click_at" (or null), "daily": [{"date": "2026-10-14", "clicks": 12}, ...]}`. `daily` always has exactly 7 entries (today and the 6 previous days, UTC), oldest first, with zero-filled gaps. `total_clicks` = `links.click_count`. `limit` defaults to 10, max 50.
+Stats object: `{"code", "url", "total_clicks", "last_click_at" (or null), "daily": [{"date": "2026-10-14", "clicks": 12}, ...]}`. `qr_clicks` is the all-time count with `source='qr'`; each `daily` entry also has `qr_clicks`. `daily` always has exactly 7 entries (today and the 6 previous days, UTC), oldest first, with zero-filled gaps. `total_clicks` = `links.click_count`. `limit` defaults to 10, max 50.
 
 Auth check: read `session:<token>` from Redis (same as shortener), then filter by `links.user_id`.
 
@@ -256,7 +261,7 @@ Loop forever: `BRPOP clicks 5`. For each event: look up `links.id` by `code` (sk
 
 One page, three files, no build step: `index.html`, `app.js` (vanilla JS, `fetch`), `style.css` (under 40 lines). Served by nginx at `/ui/`.
 
-**Look:** system monospace font, black text on white, 2 px solid black borders on inputs, buttons and tables, no rounded corners, no shadows, no icons, no colours except one accent (`#ff0` background on hover/focus). Max width 900 px, left aligned. Native HTML elements only (`form`, `input`, `button`, `table`, `pre`).
+**Look (revised):** minimal Material-style dark UI: left sidebar (Links, Top links), top bar with the user and log out, flat surfaces with 8-12 px radii, one violet accent, no gradients, inline SVG icons. Create, stats and QR open in `<dialog>`s. Stats show a stacked column chart (web vs QR per day) rendered as inline SVG, no chart library. `style.css` is no longer limited to 40 lines.
 
 **Screen states (toggle by showing/hiding `<section>` elements):**
 

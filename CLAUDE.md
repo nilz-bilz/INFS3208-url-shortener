@@ -15,7 +15,7 @@ The app is deliberately tiny. Marks come from the Kubernetes features: microserv
 - Python 3.12 + Flask + gunicorn + PyMySQL + redis-py only. Plain SQL with parameterised queries (`%s`), never string formatting.
 - Keep each service under ~200 lines. Duplicating the small `common.py` helper in each service is intended; do not create a shared package.
 - All config comes from environment variables (spec section 4). Nothing environment-specific inside images.
-- Frontend is brutalist: plain HTML, vanilla JS, monospace, black on white, borders, no rounded corners.
+- Frontend: plain HTML, vanilla JS, no build step, no frameworks. Minimal Material-style dark UI (flat colours, no gradients, inline SVG icons and chart).
 - If something is not covered by the spec, choose the simplest option and record it under "Decisions" in `README.md`. Ask before making any choice that changes the architecture.
 
 ## Conventions

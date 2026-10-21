@@ -28,4 +28,6 @@ podman-compose down
 ## Decisions
 
 - MySQL runs with `--authentication-policy=mysql_native_password` so PyMySQL can log in without adding the `cryptography` package. The Kubernetes `mysql.yaml` must pass the same arg.
+- Expiry and QR codes were added after the original spec (SPEC.md updated). QR codes are rendered server-side by the shortener with `qrcode`; scans carry `?src=qr` and are stored as `clicks.source`.
+- Existing Compose databases need the new columns: either `podman-compose down -v` (wipes data) and up again, or run the two `ALTER TABLE` statements: `links ADD COLUMN expires_at DATETIME NULL`, `clicks ADD COLUMN source VARCHAR(8) NOT NULL DEFAULT 'web'`.
 - `/healthz` and `/readyz` plus the JSON error handlers live in `common.py` (`register_common`) to avoid repeating them in `app.py`.

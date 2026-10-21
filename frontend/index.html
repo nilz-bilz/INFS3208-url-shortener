@@ -3,49 +3,127 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>URL SHORTENER</title>
+<title>Shortener</title>
 <link rel="stylesheet" href="/ui/style.css">
 </head>
 <body>
-<h1>URL SHORTENER</h1>
-<p id="msg"></p>
-
-<section id="out" hidden>
+<main id="out" hidden>
+  <h1>Shortener</h1>
   <div class="cols">
-    <form id="login-form">
+    <form id="login-form" class="card">
       <h2>Log in</h2>
-      <input name="username" placeholder="username" required autocomplete="username">
-      <input name="password" type="password" placeholder="password" required autocomplete="current-password">
-      <button>LOG IN</button>
+      <input name="username" placeholder="Username" required autocomplete="username">
+      <input name="password" type="password" placeholder="Password" required autocomplete="current-password">
+      <button class="primary">Log in</button>
     </form>
-    <form id="register-form">
+    <form id="register-form" class="card">
       <h2>Register</h2>
-      <input name="username" placeholder="username (3-50, a-z 0-9 _)" required autocomplete="username">
-      <input name="password" type="password" placeholder="password (min 8)" required autocomplete="new-password">
-      <button>REGISTER</button>
+      <input name="username" placeholder="Username (3-50, a-z 0-9 _)" required autocomplete="username">
+      <input name="password" type="password" placeholder="Password (min 8)" required autocomplete="new-password">
+      <button class="primary">Register</button>
     </form>
   </div>
-</section>
+  <p class="msg"></p>
+</main>
 
-<section id="in" hidden>
-  <p>logged in as <b id="who"></b> <button id="logout" class="linkbtn">[log out]</button></p>
+<div id="app" hidden>
+  <aside>
+    <div class="brand">Shortener</div>
+    <nav>
+      <button data-view="links" class="active"><i data-i="link"></i>Links</button>
+      <button data-view="top"><i data-i="bar"></i>Top links</button>
+    </nav>
+  </aside>
+  <div class="main">
+    <header>
+      <h1 id="title">Links</h1>
+      <span><b id="who"></b></span>
+      <button id="logout" class="icon" title="Log out"><i data-i="logout"></i></button>
+    </header>
+    <p class="msg"></p>
+
+    <section id="v-links">
+      <div class="cards">
+        <div class="card"><span>Links</span><b id="c-links">0</b></div>
+        <div class="card"><span>Total clicks</span><b id="c-clicks">0</b></div>
+        <div class="card"><span>Active links</span><b id="c-active">0</b></div>
+      </div>
+      <div class="bar">
+        <label class="search"><i data-i="search"></i><input id="search" placeholder="Search links"></label>
+        <button id="new" class="primary"><i data-i="add"></i>Create link</button>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Link</th><th>Clicks</th><th>Status</th><th>Created</th><th>Expires</th><th>Actions</th></tr></thead>
+          <tbody id="links"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="v-top" hidden>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>#</th><th>Link</th><th>Clicks</th><th></th></tr></thead>
+          <tbody id="top"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+
+<dialog id="d-create">
   <form id="create-form">
-    <input id="in-wide" name="url" type="url" placeholder="https://example.com/long/url" required>
-    <button>SHORTEN</button>
+    <h2>Create link</h2>
+    <input id="in-url" name="url" type="url" placeholder="https://example.com/long/url" required>
+    <select name="expires">
+      <option value="">Never expires</option>
+      <option value="1">Expires in 1 hour</option>
+      <option value="24">Expires in 1 day</option>
+      <option value="168">Expires in 7 days</option>
+      <option value="720">Expires in 30 days</option>
+    </select>
+    <p class="msg"></p>
+    <div class="actions"><button type="button" data-close>Cancel</button><button class="primary">Shorten</button></div>
   </form>
-  <h2>Your links <button id="refresh">refresh</button></h2>
-  <table>
-    <thead><tr><th>short</th><th>target</th><th>clicks</th><th>created</th><th>actions</th></tr></thead>
-    <tbody id="links"></tbody>
-  </table>
-  <section id="stats" hidden>
-    <h2>Stats: <span id="stats-code"></span> <button id="stats-close">close</button></h2>
-    <p>total clicks: <span id="stats-total"></span> · last click: <span id="stats-last"></span></p>
-    <pre id="stats-chart"></pre>
-  </section>
-  <h2>Top links</h2>
-  <ol id="top"></ol>
-</section>
+</dialog>
+
+<dialog id="d-edit">
+  <form id="edit-form">
+    <h2 id="edit-code"></h2>
+    <input id="edit-url" name="url" type="url" required>
+    <select name="expires">
+      <option value="keep">Keep current expiry</option>
+      <option value="none">Never expires</option>
+      <option value="1">Expires in 1 hour from now</option>
+      <option value="24">Expires in 1 day from now</option>
+      <option value="168">Expires in 7 days from now</option>
+      <option value="720">Expires in 30 days from now</option>
+    </select>
+    <p class="msg"></p>
+    <div class="actions"><button type="button" data-close>Cancel</button><button class="primary">Save</button></div>
+  </form>
+</dialog>
+
+<dialog id="d-stats">
+  <h2 id="stats-code"></h2>
+  <p id="stats-url" class="muted"></p>
+  <div class="cards">
+    <div class="card"><span>Total</span><b id="s-total"></b></div>
+    <div class="card"><span>Web</span><b id="s-web"></b></div>
+    <div class="card"><span>QR scans</span><b id="s-qr"></b></div>
+    <div class="card"><span>Last click</span><b id="s-last" class="small"></b></div>
+  </div>
+  <div id="chart"></div>
+  <div class="legend"><span class="sw web"></span>Web <span class="sw qr"></span>QR scans (last 7 days, UTC)</div>
+  <div class="actions"><button type="button" data-close>Close</button></div>
+</dialog>
+
+<dialog id="d-qr">
+  <h2 id="qr-code"></h2>
+  <img id="qr-img" alt="QR code" width="220" height="220">
+  <p class="muted">Scans are counted as QR in stats.</p>
+  <div class="actions"><a id="qr-dl" download="qr.svg" class="btn">Download SVG</a><button type="button" data-close>Close</button></div>
+</dialog>
 
 <footer>frontend __APP_VERSION__ · last API response served by <span id="served">-</span></footer>
 <script src="/ui/app.js"></script>

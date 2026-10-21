@@ -33,19 +33,23 @@ def follow(code):
         app.logger.warning("cache read failed: %s", e)
     if url is None:
         with c.get_db() as db, db.cursor() as cur:
-            cur.execute("SELECT url FROM links WHERE code=%s", (code,))
+            cur.execute("SELECT url, TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), expires_at) AS ttl "
+                        "FROM links WHERE code=%s "
+                        "AND (expires_at IS NULL OR expires_at > UTC_TIMESTAMP())", (code,))
             row = cur.fetchone()
         if not row:
             return not_found(None)
         url = row["url"]
         try:
-            r.set("link:" + code, url, ex=CACHE_TTL)
+            # cache no longer than the link has left to live
+            r.set("link:" + code, url, ex=min(CACHE_TTL, max(1, row["ttl"])) if row["ttl"] is not None else CACHE_TTL)
         except redis.RedisError as e:
             app.logger.warning("cache write failed: %s", e)
     event = {"code": code,
              "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
              "referrer": request.headers.get("Referer", "")[:255],
-             "user_agent": request.headers.get("User-Agent", "")[:255]}
+             "user_agent": request.headers.get("User-Agent", "")[:255],
+             "source": "qr" if request.args.get("src") == "qr" else "web"}
     try:
         r.lpush("clicks", json.dumps(event))
     except redis.RedisError as e:

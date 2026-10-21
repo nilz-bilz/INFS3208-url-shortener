@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS links (
   url         VARCHAR(2048) NOT NULL,
   user_id     INT           NOT NULL,
   click_count INT           NOT NULL DEFAULT 0,
+  expires_at  DATETIME      NULL,
   created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   INDEX idx_links_user (user_id)
@@ -22,6 +23,7 @@ CREATE TABLE IF NOT EXISTS clicks (
   clicked_at DATETIME     NOT NULL,
   referrer   VARCHAR(255) NULL,
   user_agent VARCHAR(255) NULL,
+  source     VARCHAR(8)   NOT NULL DEFAULT 'web',
   FOREIGN KEY (link_id) REFERENCES links(id) ON DELETE CASCADE,
   INDEX idx_clicks_link_time (link_id, clicked_at)
 );
