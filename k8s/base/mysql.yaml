@@ -1,0 +1,63 @@
+# Headless Service gives the StatefulSet pod a stable DNS name (mysql)
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+spec:
+  clusterIP: None
+  selector: {app: mysql}
+  ports:
+  - port: 3306
+    targetPort: 3306
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+spec:
+  serviceName: mysql
+  replicas: 1
+  selector:
+    matchLabels: {app: mysql}
+  template:
+    metadata:
+      labels: {app: mysql}
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        args: ["--authentication-policy=mysql_native_password"]   # lets PyMySQL log in without cryptography
+        ports: [{containerPort: 3306}]
+        env:
+        - name: MYSQL_DATABASE
+          valueFrom: {configMapKeyRef: {name: app-config, key: DB_NAME}}
+        - name: MYSQL_USER
+          valueFrom: {configMapKeyRef: {name: app-config, key: DB_USER}}
+        - name: MYSQL_PASSWORD
+          valueFrom: {secretKeyRef: {name: app-secret, key: DB_PASSWORD}}
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom: {secretKeyRef: {name: app-secret, key: MYSQL_ROOT_PASSWORD}}
+        resources:
+          requests: {cpu: 100m, memory: 256Mi}
+          limits: {cpu: 500m, memory: 1Gi}
+        readinessProbe:
+          exec:
+            command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$MYSQL_ROOT_PASSWORD\""]
+          initialDelaySeconds: 20
+          periodSeconds: 5
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+          subPath: mysql                       # avoids the lost+found directory on cloud disks
+        - name: init
+          mountPath: /docker-entrypoint-initdb.d
+      volumes:
+      - name: init
+        configMap: {name: mysql-init}          # created from db/schema.sql by the deploy scripts
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests: {storage: 1Gi}

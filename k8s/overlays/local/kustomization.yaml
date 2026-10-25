@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: urlshortener
+resources:
+- ../../base
+- ingress.yaml
+patches:
+- target: {kind: ConfigMap, name: app-config}     # short links point at the kind host port
+  patch: |-
+    - op: replace
+      path: /data/BASE_URL
+      value: http://localhost:8080

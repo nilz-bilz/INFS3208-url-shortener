@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shortener
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: shortener}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}   # zero-downtime rollouts
+  template:
+    metadata:
+      labels: {app: shortener}
+    spec:
+      topologySpreadConstraints:                       # spread pods across nodes for reliability
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels: {app: shortener}
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: shortener
+        image: localhost/shortener:v1
+        imagePullPolicy: IfNotPresent
+        ports: [{containerPort: 8000}]
+        envFrom: [{configMapRef: {name: app-config}}]
+        env:
+        - name: DB_PASSWORD
+          valueFrom: {secretKeyRef: {name: app-secret, key: DB_PASSWORD}}
+        resources:
+          requests: {cpu: 50m, memory: 64Mi}
+          limits: {cpu: 250m, memory: 256Mi}
+        readinessProbe:
+          httpGet: {path: /readyz, port: 8000}
+          periodSeconds: 5
+        livenessProbe:
+          httpGet: {path: /healthz, port: 8000}
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        lifecycle:
+          preStop: {exec: {command: ["sleep", "5"]}}    # let the load balancer drain before exit
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shortener
+spec:
+  selector: {app: shortener}
+  ports:
+  - port: 80
+    targetPort: 8000

@@ -1,0 +1,9 @@
+# Optional HTTPS: applied by deploy-gke.sh only when DOMAIN is set (__DOMAIN__ is replaced).
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: shortener-cert
+  namespace: urlshortener
+spec:
+  domains:
+  - __DOMAIN__

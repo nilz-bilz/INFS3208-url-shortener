@@ -1,0 +1,18 @@
+# Same routes as the local Ingress, but a GCE Ingress: no ingressClassName, global static IP.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: shortener-ingress
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: shortener-ip
+spec:
+  defaultBackend:
+    service: {name: redirect, port: {number: 80}}
+  rules:
+  - http:
+      paths:
+      - {path: /ui,         pathType: Prefix, backend: {service: {name: frontend,      port: {number: 80}}}}
+      - {path: /api/auth,   pathType: Prefix, backend: {service: {name: shortener,     port: {number: 80}}}}
+      - {path: /api/links,  pathType: Prefix, backend: {service: {name: shortener,     port: {number: 80}}}}
+      - {path: /api/stats,  pathType: Prefix, backend: {service: {name: analytics-api, port: {number: 80}}}}
+      - {path: /,           pathType: Prefix, backend: {service: {name: redirect,      port: {number: 80}}}}
