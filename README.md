@@ -4,6 +4,7 @@
   Student ID 49299175, 
   Email: nihalsingh.atwal@student.uq.edu.au
 
+Github: https://github.com/nilz-bilz/INFS3208-url-shortener
 
 A small URL shortener built as microservices and deployed on Kubernetes:
  Locally on [kind](https://kind.sigs.k8s.io/) and in the cloud on [GKE](https://cloud.google.com/kubernetes-engine). 
