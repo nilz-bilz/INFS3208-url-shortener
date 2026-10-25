@@ -1,5 +1,16 @@
 #!/usr/bin/env bash
-# Build all four images as localhost/<name>:<tag>. Usage: ./scripts/build.sh v1
+# ------------------------------------------------------------------------------
+# URL shortener: build the container images (INFS3208, Type I project)
+#
+# Author:         Nihal Singh Atwal 
+# Student ID:     49299175
+# Email:          nihalsingh.atwal@student.uq.edu.au
+# AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
+#
+# What it does: builds shortener, redirect, analytics and frontend as localhost/<name>:<tag>,
+# baking the tag in as APP_VERSION (shown in the X-App-Version header and the UI footer).
+# Prerequisites: podman or docker. Usage: ./scripts/build.sh <tag>   (e.g. v1, v2)
+# ------------------------------------------------------------------------------
 set -euo pipefail
 
 # Tag to build; required so every image is versioned explicitly

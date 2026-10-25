@@ -1,3 +1,14 @@
+# redirect: the hot read-only path. Serves GET /<code> and is the Ingress default backend.
+# Role: looks the code up in Redis (link:<code>), falls back to MySQL on a miss, queues a click event on the
+# Redis list "clicks" and answers 302 with Cache-Control: no-store. Expired links return 404. A Redis or
+# queue failure never causes a 500: it falls back to MySQL and skips the click.
+# Scaling: the replicas field is omitted because the HPA (hpa.yaml) owns it (3 to 10). The 100m CPU request is the
+# base for the HPA's 50% target; the 500m limit caps one pod.
+# Reliability: spread across nodes, rolling updates with maxUnavailable 0, and a 5 s preStop sleep so the load
+# balancer stops sending traffic before the pod exits.
+# Contains: Deployment and a ClusterIP Service (port 80 -> container port 8000).
+# Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+# AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
 apiVersion: apps/v1
 kind: Deployment
 metadata:

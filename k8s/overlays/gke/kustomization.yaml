@@ -1,3 +1,10 @@
+# GKE overlay: base + the GKE Ingress, with three changes.
+# 1. Image names are rewritten from localhost/<name> to Artifact Registry (<region>-docker.pkg.dev/<project>/urlshortener/<name>).
+# 2. BASE_URL is replaced with the public address (static IP, domain or PUBLIC_URL).
+# 3. The placeholders __PROJECT_ID__, __TAG__ and __BASE_URL__ are filled by scripts/deploy-gke.sh (sed on the rendered output).
+# managed-cert.yaml is not listed here: the script applies it only when DOMAIN is given.
+# Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+# AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
 # GKE overlay. __PROJECT_ID__, __TAG__ and __BASE_URL__ are filled in by scripts/deploy-gke.sh (sed on the rendered output).
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization

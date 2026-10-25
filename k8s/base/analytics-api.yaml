@@ -1,3 +1,13 @@
+# analytics-api: statistics API (GET /api/stats/<code> and /api/stats/top).
+# Role: read-only service behind the Ingress path /api/stats. Checks the session token in Redis, then
+# aggregates the clicks table in MySQL for the caller's own links (total, web vs QR, last 7 days).
+# Runs the same image as analytics-worker (localhost/analytics) with its default gunicorn command.
+# Config: app-config ConfigMap (DB_*, REDIS_*) plus DB_PASSWORD from the app-secret Secret.
+# Reliability: 2 replicas spread across nodes; /readyz (MySQL + Redis) gates traffic, /healthz restarts
+# a hung container; rolling updates never drop below the desired count (maxUnavailable 0).
+# Contains: Deployment and a ClusterIP Service (port 80 -> container port 8000).
+# Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+# AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
 apiVersion: apps/v1
 kind: Deployment
 metadata:

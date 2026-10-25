@@ -1,3 +1,8 @@
+"""Analytics worker: consumes click events from Redis and records them in MySQL.
+
+Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
+"""
 import json
 import logging
 import pathlib
@@ -14,11 +19,13 @@ running = True
 
 
 def stop(signum, frame):
+    """SIGTERM/SIGINT handler: finish the current event, then exit the loop."""
     global running
     running = False
 
 
 def handle(raw):
+    """Record one click event: insert into clicks and increment links.click_count (skips deleted links)."""
     ev = json.loads(raw)
     ts = datetime.strptime(ev["ts"], "%Y-%m-%dT%H:%M:%SZ")
     with c.get_db() as db, db.cursor() as cur:

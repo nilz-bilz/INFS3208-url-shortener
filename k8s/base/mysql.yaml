@@ -1,3 +1,13 @@
+# MySQL: the only persistent store (tables users, links, clicks).
+# Role: StatefulSet with 1 replica (single writer; a single point of failure that is accepted for this project)
+# and a 1 Gi PersistentVolumeClaim from volumeClaimTemplates, so data survives pod restarts and node loss.
+# The headless Service gives the pod the stable DNS name "mysql", which is DB_HOST for the backends.
+# First start only: the ConfigMap mysql-init (db/schema.sql) is mounted at /docker-entrypoint-initdb.d and
+# creates the tables on an empty volume. Credentials come from app-config (DB_NAME, DB_USER) and the Secret app-secret.
+# mysql_native_password lets PyMySQL log in without extra packages; subPath "mysql" avoids the lost+found
+# directory on cloud disks. Readiness uses mysqladmin ping.
+# Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+# AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
 # Headless Service gives the StatefulSet pod a stable DNS name (mysql)
 apiVersion: v1
 kind: Service

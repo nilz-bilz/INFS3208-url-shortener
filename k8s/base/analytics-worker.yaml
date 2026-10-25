@@ -1,3 +1,14 @@
+# analytics-worker: click consumer (no HTTP API, no Service).
+# Role: pops click events that the redirect service pushed onto the Redis list "clicks", inserts a row
+# into the MySQL clicks table and increments links.click_count. This keeps redirects fast: counting
+# happens asynchronously, and the worker scales independently of the stats API.
+# Runs the analytics image with the command overridden to "python worker.py". Each event goes to exactly
+# one worker, so 2 replicas are safe; an event can be lost if a worker dies mid-event (accepted for analytics).
+# Liveness: an exec probe checks that /tmp/heartbeat (touched on every loop) is newer than 30 s.
+# There is no readiness probe because the pod receives no traffic. SIGTERM finishes the current event,
+# so rolling updates are clean (terminationGracePeriodSeconds 30).
+# Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+# AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
 apiVersion: apps/v1
 kind: Deployment
 metadata:

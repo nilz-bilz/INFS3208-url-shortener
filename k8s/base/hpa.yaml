@@ -1,3 +1,10 @@
+# Autoscaler for the redirect Deployment (the hot path that every short-link visit hits).
+# Keeps between 3 and 10 replicas and targets 50% average CPU, measured against the pods' CPU request (100m).
+# Needs metrics-server (installed by deploy-local.sh on kind; built in on GKE). The redirect Deployment has no
+# replicas field, so re-applying the manifests never fights the autoscaler. After a load test the HPA waits about
+# 5 minutes before scaling back down.
+# Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+# AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:

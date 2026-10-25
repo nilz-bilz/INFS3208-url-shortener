@@ -1,3 +1,8 @@
+"""Redirect service: the hot read-only path. Cache-first lookup, queues a click event, answers 302.
+
+Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
+"""
 import json
 import os
 from datetime import datetime, timezone
@@ -15,16 +20,19 @@ CACHE_TTL = int(os.environ.get("CACHE_TTL_SECONDS", "3600"))
 
 @app.errorhandler(404)
 def not_found(e):
+    """Plain-text 404 page for unknown or expired short links."""
     return Response("Short link not found", status=404, mimetype="text/plain")
 
 
 @app.get("/")
 def index():
+    """GET /: send visitors to the UI."""
     return redirect("/ui/", code=302)
 
 
 @app.get("/<code>")
 def follow(code):
+    """GET /<code>: look up the target (Redis, then MySQL), queue a click event, answer 302."""
     r = c.get_redis()
     url = None
     try:

@@ -1,3 +1,11 @@
+# app-config: non-secret settings, read by every backend through envFrom.
+# DB_HOST/DB_PORT/DB_NAME/DB_USER point at the mysql Service; REDIS_HOST/REDIS_PORT at the redis Service.
+# BASE_URL is the public address used to build short links; each overlay replaces it (kind: localhost:8080,
+# GKE: the static IP or domain). SESSION_TTL_SECONDS and CACHE_TTL_SECONDS control login and redirect-cache lifetime.
+# Not here: DB_PASSWORD and MYSQL_ROOT_PASSWORD (Secret app-secret, created by the deploy scripts from .env)
+# and APP_VERSION (baked into each image at build time).
+# Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+# AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
 # Non-secret settings (spec section 4). Secret app-secret and ConfigMap mysql-init are created by the deploy scripts.
 apiVersion: v1
 kind: ConfigMap

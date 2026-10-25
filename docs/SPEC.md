@@ -1,6 +1,8 @@
 # URL Shortener – Development Spec
 
-INFS3208 Type I project · Oct 20, 2026 · @Nihal
+> Author: Nihal Singh Atwal
+  Student ID 49299175, 
+  Email: nihalsingh.atwal@student.uq.edu.au
 
 ## 1. Overview and scope
 

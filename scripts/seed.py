@@ -1,7 +1,11 @@
 """Seed demo data: user demo/demo1234, 50 links, ~20,000 clicks over 30 days.
 Includes expiry cases (links 30-34 expire in 2 hours, 35-39 in 7 days, 45-49 already expired)
 and QR scans (about 15% of clicks, 60% on links 5-9).
-Reads DB_* env vars. Re-runnable: it replaces the existing demo user (clicks/links cascade)."""
+Reads DB_* env vars. Re-runnable: it replaces the existing demo user (clicks/links cascade).
+
+Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
+"""
 import os
 import random
 import secrets

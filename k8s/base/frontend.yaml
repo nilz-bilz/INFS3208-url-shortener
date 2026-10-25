@@ -1,3 +1,10 @@
+# frontend: static UI (index.html, app.js, style.css) served by nginx under /ui/.
+# Role: the only user-facing page; it calls the other services through the Ingress with relative /api/... paths.
+# Needs no environment variables, MySQL or Redis. nginx answers /healthz and /readyz itself, which also
+# serves as the GKE load balancer health check path. 2 replicas, spread across nodes, zero-downtime updates.
+# Contains: Deployment and a ClusterIP Service (port 80 -> container port 80).
+# Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+# AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
 apiVersion: apps/v1
 kind: Deployment
 metadata:

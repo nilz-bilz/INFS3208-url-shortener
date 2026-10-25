@@ -1,3 +1,6 @@
+// Frontend logic for the URL shortener UI (vanilla JS, no build step).
+// Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+// AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
 const $ = (id) => document.getElementById(id);
 let token = localStorage.getItem('token');
 let links = [];

@@ -1,4 +1,11 @@
+# Google-managed TLS certificate for a domain (optional HTTPS on GKE).
+# Google issues and renews it automatically once the domain's A record points straight at the static IP
+# (not through a proxy). Check progress with: kubectl describe managedcertificate shortener-cert -n urlshortener
+# (Status should become Active, which can take up to an hour). Attached to the Ingress by scripts/deploy-gke.sh.
+# Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+# AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
 # Optional HTTPS: applied by deploy-gke.sh only when DOMAIN is set (__DOMAIN__ is replaced).
+# The demo instance on https://u.nihal.au uses a managed certificate from clodflare instead.
 apiVersion: networking.gke.io/v1
 kind: ManagedCertificate
 metadata:

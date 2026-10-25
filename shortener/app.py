@@ -1,3 +1,8 @@
+"""Shortener service: authentication, link management (create, list, edit, delete), expiry and QR codes.
+
+Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
+"""
 import os
 import io
 import re
@@ -27,11 +32,13 @@ UNAME_RE = re.compile(r"^[A-Za-z0-9_]{3,50}$")
 
 
 def body():
+    """Return the request's JSON body as a dict (empty dict if missing or not an object)."""
     data = request.get_json(silent=True)
     return data if isinstance(data, dict) else {}
 
 
 def link_json(row):
+    """Convert a links row into the public link object (adds short_url, ISO timestamps)."""
     return {"code": row["code"], "url": row["url"],
             "short_url": f"{BASE_URL}/{row['code']}",
             "click_count": row["click_count"],
@@ -41,6 +48,7 @@ def link_json(row):
 
 @app.post("/api/auth/register")
 def register():
+    """POST /api/auth/register: create a user (username 3-50 of [A-Za-z0-9_], password >= 8). 409 if taken."""
     d = body()
     username, password = d.get("username"), d.get("password")
     if not isinstance(username, str) or not UNAME_RE.match(username):
@@ -59,6 +67,7 @@ def register():
 
 @app.post("/api/auth/login")
 def login():
+    """POST /api/auth/login: verify credentials and return an opaque session token stored in Redis."""
     d = body()
     username, password = d.get("username"), d.get("password")
     if not isinstance(username, str) or not isinstance(password, str):
@@ -75,6 +84,7 @@ def login():
 
 @app.post("/api/auth/logout")
 def logout():
+    """POST /api/auth/logout: delete the caller's session token."""
     if c.current_user_id() is None:
         return c.json_error("unauthorized", 401)
     c.get_redis().delete("session:" + c.bearer_token())
@@ -83,6 +93,7 @@ def logout():
 
 @app.get("/api/auth/me")
 def me():
+    """GET /api/auth/me: return the logged-in user."""
     uid = c.current_user_id()
     if uid is None:
         return c.json_error("unauthorized", 401)
@@ -112,6 +123,7 @@ def check_link_input(url, hours):
 
 @app.post("/api/links")
 def create_link():
+    """POST /api/links: validate the URL and optional expiry, insert a unique 6-char code, warm the cache."""
     uid = c.current_user_id()
     if uid is None:
         return c.json_error("unauthorized", 401)
@@ -145,6 +157,7 @@ def create_link():
 
 @app.get("/api/links")
 def list_links():
+    """GET /api/links: the caller's links, newest first."""
     uid = c.current_user_id()
     if uid is None:
         return c.json_error("unauthorized", 401)
@@ -157,6 +170,7 @@ def list_links():
 
 @app.patch("/api/links/<code>")
 def edit_link(code):
+    """PATCH /api/links/<code>: change the target URL and/or expiry; invalidates the cached redirect."""
     uid = c.current_user_id()
     if uid is None:
         return c.json_error("unauthorized", 401)
@@ -186,6 +200,7 @@ def edit_link(code):
 
 @app.delete("/api/links/<code>")
 def delete_link(code):
+    """DELETE /api/links/<code>: delete one of the caller's links and its cache entry."""
     uid = c.current_user_id()
     if uid is None:
         return c.json_error("unauthorized", 401)
@@ -203,6 +218,7 @@ def delete_link(code):
 
 @app.get("/api/links/<code>/qr")
 def link_qr(code):
+    """GET /api/links/<code>/qr: SVG QR code that encodes the short URL with ?src=qr (public)."""
     # public: the short URL is public anyway, and this lets <img src> work without a token
     with c.get_db() as db, db.cursor() as cur:
         cur.execute("SELECT code FROM links WHERE code=%s", (code,))

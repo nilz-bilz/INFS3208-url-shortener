@@ -1,3 +1,6 @@
+/* Styles for the URL shortener UI (minimal dark Material-style).
+   Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+   AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author. */
 :root { --bg: #121212; --surface: #1e1e1e; --line: #2e2e2e; --text: #e8e8e8; --muted: #9a9a9a;
         --primary: #a78bfa; --qr: #2dd4bf; --danger: #f87171; }
 * { box-sizing: border-box; }

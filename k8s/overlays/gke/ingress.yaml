@@ -1,3 +1,11 @@
+# GKE Ingress: becomes a Google Cloud external HTTP load balancer on the reserved global static IP
+# "shortener-ip" (annotation). It routes by path, exactly like the local Ingress: /ui to frontend,
+# /api/auth and /api/links to shortener, /api/stats to analytics-api, everything else to redirect.
+# GKE uses each pod's readiness probe path as the load balancer health check (so every service serves /readyz).
+# No ingressClassName (GKE's default controller handles it). The HTTPS certificate annotation is added by
+# scripts/deploy-gke.sh only when DOMAIN is set. The load balancer needs 3 to 5 minutes to start serving.
+# Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+# AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
 # Same routes as the local Ingress, but a GCE Ingress: no ingressClassName, global static IP.
 apiVersion: networking.k8s.io/v1
 kind: Ingress

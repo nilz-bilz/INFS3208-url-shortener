@@ -1,3 +1,8 @@
+# Local overlay for kind: base + the local Ingress, with BASE_URL set to http://localhost:8080 so short
+# links open through the kind port mapping. Images stay as localhost/<name>:v1; scripts/deploy-local.sh
+# loads them into the nodes with kind load image-archive, so nothing is pulled from a registry.
+# Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+# AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: urlshortener

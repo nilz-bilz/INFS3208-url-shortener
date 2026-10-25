@@ -1,3 +1,7 @@
+# Namespace that holds every object of the application; all kubectl commands use -n urlshortener.
+# Created first by the deploy scripts so the Secret and ConfigMap can be placed in it.
+# Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+# AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
 apiVersion: v1
 kind: Namespace
 metadata:

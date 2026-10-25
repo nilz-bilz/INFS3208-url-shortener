@@ -1,3 +1,6 @@
+# Stage 1: run the whole app locally without Kubernetes.
+# Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+# AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
 # Stage 1: whole app without Kubernetes. Only the gateway publishes a port (8080).
 x-app-env: &app-env
   DB_HOST: ${DB_HOST:-mysql}

@@ -1,3 +1,12 @@
+# shortener: authentication and link management behind /api/auth and /api/links.
+# Role: register/login/logout, create, list, edit and delete links, and render QR codes. Owns the users table,
+# writes links, creates sessions in Redis, warms the redirect cache on create and clears it on edit and delete.
+# Config: app-config (DB_*, REDIS_*, BASE_URL, SESSION_TTL_SECONDS, CACHE_TTL_SECONDS) and DB_PASSWORD from app-secret.
+# Reliability: 2 replicas spread across nodes, /readyz gates traffic, /healthz restarts hung containers, rolling
+# updates with maxUnavailable 0.
+# Contains: Deployment and a ClusterIP Service (port 80 -> container port 8000).
+# Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+# AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
 apiVersion: apps/v1
 kind: Deployment
 metadata:

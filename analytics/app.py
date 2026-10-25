@@ -1,3 +1,8 @@
+"""Analytics API: per-link statistics (web vs QR, last 7 days) and top links.
+
+Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
+"""
 from datetime import datetime, timedelta, timezone
 
 from flask import Flask, jsonify, request
@@ -10,6 +15,7 @@ c.register_common(app)
 
 @app.get("/api/stats/top")
 def top():
+    """GET /api/stats/top: the caller's most-clicked links (limit 1-50, default 10)."""
     uid = c.current_user_id()
     if uid is None:
         return c.json_error("unauthorized", 401)
@@ -26,6 +32,7 @@ def top():
 
 @app.get("/api/stats/<code>")
 def stats(code):
+    """GET /api/stats/<code>: totals, QR clicks, last click and a zero-filled 7-day breakdown."""
     uid = c.current_user_id()
     if uid is None:
         return c.json_error("unauthorized", 401)

@@ -1,3 +1,7 @@
+-- MySQL schema for the URL shortener: users, links and clicks.
+-- Author: Nihal Singh Atwal (student ID 49299175, nihalsingh.atwal@student.uq.edu.au)
+-- AI declaration: Written with assistance from Claude Code (Anthropic); reviewed and tested by the author.
+
 CREATE TABLE IF NOT EXISTS users (
   id            INT AUTO_INCREMENT PRIMARY KEY,
   username      VARCHAR(50)  NOT NULL UNIQUE,
