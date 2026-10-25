@@ -32,6 +32,8 @@ Four container images make five application Deployments, plus MySQL and Redis.
 
 ## System design
 
+![architecture-diagram](docs/architecture-gcp.drawio.png)
+
 Components, each in its own container:
 
 - **frontend** (nginx): serves the static UI under `/ui/`.
